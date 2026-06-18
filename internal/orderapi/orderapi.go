@@ -8,6 +8,7 @@ import (
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/config"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/httpserver"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/kafka"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/logger"
 )
 
@@ -16,7 +17,14 @@ func Run(cfg *config.Config) error {
 
 	mux := http.NewServeMux()
 
-	handler := NewHandler(log)
+	producer := kafka.NewProducer(cfg.Kafka.Topics.OrderEvents, cfg.Kafka.Brokers)
+	defer func() {
+		if err := producer.Close(); err != nil {
+			log.Error("failed to close producer", "error", err)
+		}
+	}()
+
+	handler := NewHandler(log, producer)
 	handler.Register(mux)
 
 	server := httpserver.New(

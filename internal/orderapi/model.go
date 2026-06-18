@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type CreateOrderRequest struct {
@@ -15,6 +16,17 @@ type CreateOrderRequest struct {
 type OrderItem struct {
 	SKU      string `json:"sku"`
 	Quantity int    `json:"quantity"`
+}
+
+type OrderCreatedEvent struct {
+	EventID   string      `json:"eventId"`
+	EventType string      `json:"eventType"`
+	Version   int         `json:"version"`
+	OrderID   string      `json:"orderId"`
+	UserID    string      `json:"userId"`
+	Items     []OrderItem `json:"items"`
+	Amount    int64       `json:"amount"`
+	CreatedAt time.Time   `json:"createdAt"`
 }
 
 type CreateOrderResponse struct {

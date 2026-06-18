@@ -1,20 +1,28 @@
 package orderapi
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-type Handler struct {
-	log *slog.Logger
+type OrderPublisher interface {
+	Write(ctx context.Context, key string, data any) error
 }
 
-func NewHandler(log *slog.Logger) *Handler {
+type Handler struct {
+	log       *slog.Logger
+	publisher OrderPublisher
+}
+
+func NewHandler(log *slog.Logger, publisher OrderPublisher) *Handler {
 	return &Handler{
-		log: log,
+		log:       log,
+		publisher: publisher,
 	}
 }
 
@@ -51,12 +59,29 @@ func (h *Handler) order(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uuid.NewString()
+	orderID := uuid.NewString()
+	eventID := uuid.NewString()
 	response := CreateOrderResponse{
-		OrderID: id,
+		OrderID: orderID,
 	}
 
-	// kafka producer
+	event := OrderCreatedEvent{
+		EventID:   eventID,
+		EventType: "order_created",
+		Version:   1,
+		OrderID:   orderID,
+		UserID:    order.UserID,
+		Items:     order.Items,
+		Amount:    order.Amount,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	if err := h.publisher.Write(r.Context(), orderID, event); err != nil {
+		h.log.Error("failed to publish order created event", "error", err, "order_id", orderID)
+		writeError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	h.log.Info("published order created event", "order_id", orderID, "event_id", eventID)
 
 	writeJSON(w, response, http.StatusCreated)
 }
