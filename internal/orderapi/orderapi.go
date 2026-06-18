@@ -16,6 +16,9 @@ func Run(cfg *config.Config) error {
 
 	mux := http.NewServeMux()
 
+	handler := NewHandler(log)
+	handler.Register(mux)
+
 	server := httpserver.New(
 		mux,
 		httpserver.Address(cfg.HTTP.Address),
