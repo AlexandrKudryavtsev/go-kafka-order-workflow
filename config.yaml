@@ -1,0 +1,24 @@
+http:
+  address: ":8000"
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 60s
+  shutdown_timeout: 5s
+
+logger:
+  level: info
+  format: json
+  add_source: false
+
+kafka:
+  brokers:
+    - localhost:9094
+  topics:
+    order_events: order-events
+    inventory_events: inventory-events
+    payment_events: payment-events
+    shipping_events: shipping-events
+    dead_letter_events: dead-letter-events
+
+retry:
+  max_retries: 3

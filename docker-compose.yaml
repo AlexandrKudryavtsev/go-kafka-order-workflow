@@ -23,7 +23,6 @@ services:
     
   kafka_init:
     image: apache/kafka:4.0.0
-    container_name: kafka_init
     depends_on:
       - kafka
     volumes:
@@ -32,7 +31,6 @@ services:
 
   kafka_ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: kafka_ui
     ports:
       - "8080:8080"
     depends_on:
