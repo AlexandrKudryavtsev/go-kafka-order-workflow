@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/config"
-	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/event"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/kafka"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/logger"
 )
@@ -49,7 +49,7 @@ func Run(cfg *config.Config, groupID string) error {
 			return err
 		}
 
-		var createdEvent event.OrderCreatedEvent
+		var createdEvent events.OrderCreatedEvent
 		if err = json.Unmarshal(msg.Value, &createdEvent); err != nil {
 			// TODO: write to dlq
 			log.Error("failed to unmarshal json", "error", err)
@@ -62,7 +62,7 @@ func Run(cfg *config.Config, groupID string) error {
 			continue
 		}
 
-		if createdEvent.EventType != event.EventTypeOrderCreated {
+		if createdEvent.EventType != events.EventTypeOrderCreated {
 			log.Info(
 				"skip unsupported event",
 				"event_type", createdEvent.EventType,

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/event"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 	"github.com/google/uuid"
 )
 
@@ -24,7 +24,7 @@ func NewHandler() *Handler {
 	}
 }
 
-func (h *Handler) HandleOrderCreated(ctx context.Context, e event.OrderCreatedEvent) (any, error) {
+func (h *Handler) HandleOrderCreated(ctx context.Context, e events.OrderCreatedEvent) (any, error) {
 	h.mx.Lock()
 	defer h.mx.Unlock()
 
@@ -33,9 +33,9 @@ func (h *Handler) HandleOrderCreated(ctx context.Context, e event.OrderCreatedEv
 
 	for _, item := range e.Items {
 		if item.Quantity > h.stocks[item.SKU] {
-			return event.InventoryRejectedEvent{
+			return events.InventoryRejectedEvent{
 				EventID:    newEventID,
-				EventType:  event.EventTypeInventoryRejected,
+				EventType:  events.EventTypeInventoryRejected,
 				Version:    1,
 				OrderID:    e.OrderID,
 				Reason:     "not_enough_stock",
@@ -48,9 +48,9 @@ func (h *Handler) HandleOrderCreated(ctx context.Context, e event.OrderCreatedEv
 		h.stocks[item.SKU] -= item.Quantity
 	}
 
-	return event.InventoryReservedEvent{
+	return events.InventoryReservedEvent{
 		EventID:    newEventID,
-		EventType:  event.EventTypeInventoryReserved,
+		EventType:  events.EventTypeInventoryReserved,
 		Version:    1,
 		OrderID:    e.OrderID,
 		Items:      e.Items,

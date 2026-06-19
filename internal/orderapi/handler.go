@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/event"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 	"github.com/google/uuid"
 )
 
@@ -66,9 +66,9 @@ func (h *Handler) order(w http.ResponseWriter, r *http.Request) {
 		OrderID: orderID,
 	}
 
-	event := event.OrderCreatedEvent{
+	event := events.OrderCreatedEvent{
 		EventID:   eventID,
-		EventType: event.EventTypeOrderCreated,
+		EventType: events.EventTypeOrderCreated,
 		Version:   1,
 		OrderID:   orderID,
 		UserID:    order.UserID,

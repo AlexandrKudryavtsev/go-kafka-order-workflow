@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/event"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 )
 
 type CreateOrderRequest struct {
-	UserID string       `json:"userId"`
-	Items  []event.Item `json:"items"`
-	Amount int64        `json:"amount"`
+	UserID string        `json:"userId"`
+	Items  []events.Item `json:"items"`
+	Amount int64         `json:"amount"`
 }
 
 type CreateOrderResponse struct {
@@ -25,9 +25,9 @@ type ErrorResponse struct {
 func (o *CreateOrderRequest) Validate() error {
 	// normalization
 	o.UserID = strings.TrimSpace(o.UserID)
-	items := make([]event.Item, 0, len(o.Items))
+	items := make([]events.Item, 0, len(o.Items))
 	for _, item := range o.Items {
-		items = append(items, event.Item{
+		items = append(items, events.Item{
 			SKU:      strings.TrimSpace(item.SKU),
 			Quantity: item.Quantity,
 		})
