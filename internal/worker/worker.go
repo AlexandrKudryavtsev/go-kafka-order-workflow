@@ -7,14 +7,16 @@ import (
 	"time"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/kafka"
 	"github.com/google/uuid"
 )
 
 type Result struct {
-	Key   string
-	Event any
-	Skip  bool
+	EventID string
+	Key     string
+	Event   any
+	Skip    bool
 }
 
 type Processor interface {
@@ -22,14 +24,15 @@ type Processor interface {
 }
 
 type Config struct {
-	ServiceName     string
-	SourceTopic     string
-	OutputTopic     string
-	DLQTopic        string
-	Brokers         []string
-	ConsumerGroupID string
-	MaxAttempts     int
-	Logger          *slog.Logger
+	ServiceName      string
+	SourceTopic      string
+	OutputTopic      string
+	DLQTopic         string
+	Brokers          []string
+	ConsumerGroupID  string
+	MaxAttempts      int
+	Logger           *slog.Logger
+	IdempotencyStore idempotency.Store
 }
 
 func Run(ctx context.Context, cfg Config, processor Processor) error {
@@ -38,6 +41,9 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 	}
 	if cfg.Logger == nil {
 		return errors.New("invalid logger")
+	}
+	if cfg.IdempotencyStore == nil {
+		return errors.New("invalid idempotency store")
 	}
 	if processor == nil {
 		return errors.New("invalid processor")
@@ -138,6 +144,8 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			return err
 		}
 		log.Info("published event", "topic", cfg.OutputTopic, "key", result.Key)
+
+		cfg.IdempotencyStore.Mark(result.EventID)
 
 		if err = consumer.Commit(ctx, msg); err != nil {
 			log.Error("failed to commit message", "error", err)

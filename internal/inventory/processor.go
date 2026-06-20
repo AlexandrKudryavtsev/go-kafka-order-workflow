@@ -5,16 +5,21 @@ import (
 	"encoding/json"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/worker"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/kafka"
 )
 
 type Processor struct {
 	handler *Handler
+	store   idempotency.Store
 }
 
-func NewProcessor(handler *Handler) *Processor {
-	return &Processor{handler: handler}
+func NewProcessor(handler *Handler, store idempotency.Store) *Processor {
+	return &Processor{
+		handler: handler,
+		store:   store,
+	}
 }
 
 func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Result, error) {
@@ -28,13 +33,18 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 		return worker.Result{Skip: true}, nil
 	}
 
+	if p.store.Has(event.EventID) {
+		return worker.Result{Skip: true}, nil
+	}
+
 	out, err := p.handler.HandleOrderCreated(ctx, event)
 	if err != nil {
 		return worker.Result{}, err
 	}
 
 	return worker.Result{
-		Key:   event.OrderID,
-		Event: out,
+		EventID: event.EventID,
+		Key:     event.OrderID,
+		Event:   out,
 	}, nil
 }

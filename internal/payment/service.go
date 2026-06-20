@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/config"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/worker"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/logger"
 )
@@ -16,17 +17,19 @@ func Run(cfg *config.Config, groupID string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	store := idempotency.NewMemoryStore()
 	handler := NewHandler()
-	processor := NewProcessor(handler)
+	processor := NewProcessor(handler, store)
 
 	return worker.Run(ctx, worker.Config{
-		ServiceName:     "payment-service",
-		SourceTopic:     cfg.Kafka.Topics.InventoryEvents,
-		OutputTopic:     cfg.Kafka.Topics.PaymentEvents,
-		DLQTopic:        cfg.Kafka.Topics.DeadLetterEvents,
-		Brokers:         cfg.Kafka.Brokers,
-		ConsumerGroupID: groupID,
-		MaxAttempts:     cfg.Retry.MaxRetries,
-		Logger:          log,
+		ServiceName:      "payment-service",
+		SourceTopic:      cfg.Kafka.Topics.InventoryEvents,
+		OutputTopic:      cfg.Kafka.Topics.PaymentEvents,
+		DLQTopic:         cfg.Kafka.Topics.DeadLetterEvents,
+		Brokers:          cfg.Kafka.Brokers,
+		ConsumerGroupID:  groupID,
+		MaxAttempts:      cfg.Retry.MaxRetries,
+		Logger:           log,
+		IdempotencyStore: store,
 	}, processor)
 }
