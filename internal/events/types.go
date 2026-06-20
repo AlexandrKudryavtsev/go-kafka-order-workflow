@@ -83,3 +83,13 @@ type PaymentFailedEvent struct {
 	Reason   string    `json:"reason"`
 	FailedAt time.Time `json:"failedAt"`
 }
+
+type ShipmentCreatedEvent struct {
+	EventID   string `json:"eventId"`
+	EventType string `json:"eventType"`
+	Version   int    `json:"version"`
+	OrderID   string `json:"orderId"`
+
+	ShipmentID string    `json:"shipmentId"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
