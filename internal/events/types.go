@@ -1,7 +1,6 @@
 package events
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -21,8 +20,8 @@ type Item struct {
 }
 
 type DLQEvent struct {
-	EventID       string          `json:"eventId"`
-	OriginalEvent json.RawMessage `json:"originalEvent"`
+	EventID       string `json:"eventId"`
+	OriginalEvent string `json:"originalEvent"`
 
 	Reason        string    `json:"reason"`
 	Error         string    `json:"error"`
