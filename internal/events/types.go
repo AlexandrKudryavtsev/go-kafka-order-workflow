@@ -50,6 +50,7 @@ type InventoryReservedEvent struct {
 	OrderID   string `json:"orderId"`
 
 	Items      []Item    `json:"items"`
+	Amount     int64     `json:"amount"`
 	ReservedAt time.Time `json:"reservedAt"`
 }
 
@@ -61,4 +62,24 @@ type InventoryRejectedEvent struct {
 
 	Reason     string    `json:"reason"`
 	RejectedAt time.Time `json:"rejectedAt"`
+}
+
+type PaymentSucceededEvent struct {
+	EventID   string `json:"eventId"`
+	EventType string `json:"eventType"`
+	Version   int    `json:"version"`
+	OrderID   string `json:"orderId"`
+
+	Amount int64     `json:"amount"`
+	PaidAt time.Time `json:"paidAt"`
+}
+
+type PaymentFailedEvent struct {
+	EventID   string `json:"eventId"`
+	EventType string `json:"eventType"`
+	Version   int    `json:"version"`
+	OrderID   string `json:"orderId"`
+
+	Reason   string    `json:"reason"`
+	FailedAt time.Time `json:"failedAt"`
 }

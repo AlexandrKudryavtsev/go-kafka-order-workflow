@@ -54,6 +54,7 @@ func (h *Handler) HandleOrderCreated(ctx context.Context, e events.OrderCreatedE
 		Version:    1,
 		OrderID:    e.OrderID,
 		Items:      e.Items,
+		Amount:     e.Amount,
 		ReservedAt: now,
 	}, nil
 }
