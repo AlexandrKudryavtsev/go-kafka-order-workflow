@@ -76,5 +76,27 @@ func (c *Config) Validate() error {
 		return errors.New("invalid max_retries")
 	}
 
+	// postgres
+	if c.Postgres.Database == "" {
+		return errors.New("invalid database")
+	}
+	if c.Postgres.Host == "" {
+		return errors.New("invalid host")
+	}
+	if c.Postgres.Port < 1 || c.Postgres.Port > 65_535 {
+		return errors.New("invalid port")
+	}
+	if c.Postgres.Password == "" {
+		return errors.New("invalid password")
+	}
+	if c.Postgres.User == "" {
+		return errors.New("invalid user")
+	}
+	switch c.Postgres.SSLMode {
+	case "disable", "require", "verify-ca", "verify-full", "allow", "prefer":
+	default:
+		return errors.New("invalid ssl mode")
+	}
+
 	return nil
 }

@@ -145,7 +145,10 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 		}
 		log.Info("published event", "topic", cfg.OutputTopic, "key", result.Key)
 
-		cfg.IdempotencyStore.Mark(result.EventID)
+		if err := cfg.IdempotencyStore.Mark(ctx, result.EventID); err != nil {
+			log.Error("failed to mark event as processed", "error", err)
+			return err
+		}
 
 		if err = consumer.Commit(ctx, msg); err != nil {
 			log.Error("failed to commit message", "error", err)

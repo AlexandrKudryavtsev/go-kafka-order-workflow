@@ -27,4 +27,13 @@ func (c *Config) Normalize() {
 	c.Kafka.Topics.OrderEvents = strings.TrimSpace(c.Kafka.Topics.OrderEvents)
 	c.Kafka.Topics.PaymentEvents = strings.TrimSpace(c.Kafka.Topics.PaymentEvents)
 	c.Kafka.Topics.ShippingEvents = strings.TrimSpace(c.Kafka.Topics.ShippingEvents)
+
+	c.Postgres.Database = strings.TrimSpace(c.Postgres.Database)
+	c.Postgres.Host = strings.TrimSpace(c.Postgres.Host)
+	c.Postgres.User = strings.TrimSpace(c.Postgres.User)
+	c.Postgres.Password = strings.TrimSpace(c.Postgres.Password)
+	c.Postgres.SSLMode = strings.ToLower(strings.TrimSpace(c.Postgres.SSLMode))
+	if c.Postgres.SSLMode == "" {
+		c.Postgres.SSLMode = "disable"
+	}
 }

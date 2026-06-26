@@ -5,14 +5,16 @@ import (
 	"os"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/logger"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/postgres"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	HTTP   HTTPConfig    `yaml:"http"`
-	Logger logger.Config `yaml:"logger"`
-	Kafka  KafkaConfig   `yaml:"kafka"`
-	Retry  RetryConfig   `yaml:"retry"`
+	HTTP     HTTPConfig      `yaml:"http"`
+	Logger   logger.Config   `yaml:"logger"`
+	Kafka    KafkaConfig     `yaml:"kafka"`
+	Retry    RetryConfig     `yaml:"retry"`
+	Postgres postgres.Config `yaml:"postgres"`
 }
 
 type HTTPConfig struct {

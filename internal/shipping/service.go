@@ -9,7 +9,10 @@ import (
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/worker"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/logger"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/postgres"
 )
+
+const serviceName = "shipping-service"
 
 func Run(cfg *config.Config, groupID string) error {
 	log := logger.New(cfg.Logger)
@@ -17,12 +20,25 @@ func Run(cfg *config.Config, groupID string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	store := idempotency.NewMemoryStore()
+	db, err := postgres.New(ctx, cfg.Postgres)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	store, err := idempotency.NewPostgresStore(db.Pool(), serviceName)
+	if err != nil {
+		return err
+	}
+	if err := store.Init(ctx); err != nil {
+		return err
+	}
+
 	handler := NewHandler()
 	processor := NewProcessor(handler, store)
 
 	return worker.Run(ctx, worker.Config{
-		ServiceName:      "shipping-service",
+		ServiceName:      serviceName,
 		SourceTopic:      cfg.Kafka.Topics.PaymentEvents,
 		OutputTopic:      cfg.Kafka.Topics.ShippingEvents,
 		DLQTopic:         cfg.Kafka.Topics.DeadLetterEvents,

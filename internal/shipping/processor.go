@@ -33,7 +33,12 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 		return worker.Result{Skip: true}, nil
 	}
 
-	if p.store.Has(event.EventID) {
+	has, err := p.store.Has(ctx, event.EventID)
+	if err != nil {
+		return worker.Result{}, err
+	}
+
+	if has {
 		return worker.Result{Skip: true}, nil
 	}
 

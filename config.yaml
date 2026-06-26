@@ -22,3 +22,13 @@ kafka:
 
 retry:
   max_retries: 3
+
+postgres:
+  host: localhost
+  port: 5432
+  database: idempotencydb
+  user: admin
+  password: password
+  ssl_mode: disable
+  max_conns: 10
+  min_conns: 1

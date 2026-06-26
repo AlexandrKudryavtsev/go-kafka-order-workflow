@@ -1,6 +1,9 @@
 package idempotency
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 type MemoryStore struct {
 	mx    sync.RWMutex
@@ -16,18 +19,20 @@ func NewMemoryStore() *MemoryStore {
 
 var _ Store = (*MemoryStore)(nil)
 
-func (m *MemoryStore) Has(eventID string) bool {
+func (m *MemoryStore) Has(ctx context.Context, eventID string) (bool, error) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
 	_, ok := m.store[eventID]
 
-	return ok
+	return ok, nil
 }
 
-func (m *MemoryStore) Mark(eventID string) {
+func (m *MemoryStore) Mark(ctx context.Context, eventID string) error {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
 	m.store[eventID] = struct{}{}
+
+	return nil
 }
