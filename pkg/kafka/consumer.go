@@ -9,9 +9,12 @@ import (
 )
 
 type Message struct {
-	Key   []byte
-	Value []byte
-	raw   kafkago.Message
+	Key       []byte
+	Value     []byte
+	raw       kafkago.Message
+	Topic     string
+	Partition int
+	Offset    int64
 }
 
 type Consumer struct {
@@ -41,9 +44,12 @@ func (c *Consumer) Fetch(ctx context.Context) (Message, error) {
 	}
 
 	return Message{
-		Key:   msg.Key,
-		Value: msg.Value,
-		raw:   msg,
+		Key:       msg.Key,
+		Value:     msg.Value,
+		raw:       msg,
+		Topic:     msg.Topic,
+		Partition: msg.Partition,
+		Offset:    msg.Offset,
 	}, nil
 }
 

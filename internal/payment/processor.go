@@ -50,6 +50,7 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 	return worker.Result{
 		EventID: event.EventID,
 		Key:     event.OrderID,
+		OrderID: event.OrderID,
 		Event:   out,
 	}, nil
 }

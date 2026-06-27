@@ -16,7 +16,7 @@ func NewProducer(topic string, brokers []string) *Producer {
 	writer := &kafkago.Writer{
 		Topic:    topic,
 		Addr:     kafkago.TCP(brokers...),
-		Balancer: &kafkago.LeastBytes{},
+		Balancer: &kafkago.Hash{},
 	}
 
 	return &Producer{

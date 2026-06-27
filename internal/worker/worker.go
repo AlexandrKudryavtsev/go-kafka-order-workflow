@@ -14,6 +14,7 @@ import (
 
 type Result struct {
 	EventID string
+	OrderID string
 	Key     string
 	Event   any
 	Skip    bool
@@ -49,7 +50,7 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 		return errors.New("invalid processor")
 	}
 
-	log := cfg.Logger.With("service", cfg.ServiceName, "topic", cfg.SourceTopic, "group", cfg.ConsumerGroupID)
+	log := cfg.Logger.With("service", cfg.ServiceName, "source_topic", cfg.SourceTopic, "group", cfg.ConsumerGroupID)
 
 	consumer := kafka.NewConsumer(cfg.SourceTopic, cfg.ConsumerGroupID, cfg.Brokers)
 	defer func() {
@@ -81,6 +82,13 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			log.Error("failed to fetch message", "error", err)
 			return err
 		}
+		log.Info(
+			"fetched event",
+			"partition", msg.Partition,
+			"offset", msg.Offset,
+			"source_topic", msg.Topic,
+			"key", string(msg.Key),
+		)
 
 		handled := false
 		var lastError error
@@ -143,7 +151,13 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			log.Error("failed to write message", "error", err)
 			return err
 		}
-		log.Info("published event", "topic", cfg.OutputTopic, "key", result.Key)
+		log.Info(
+			"published event",
+			"output_topic", cfg.OutputTopic,
+			"key", result.Key,
+			"order_id", result.OrderID,
+			"input_event_id", result.EventID,
+		)
 
 		if err := cfg.IdempotencyStore.Mark(ctx, result.EventID); err != nil {
 			log.Error("failed to mark event as processed", "error", err)
