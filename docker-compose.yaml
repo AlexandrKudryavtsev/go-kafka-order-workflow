@@ -80,26 +80,38 @@ services:
   inventory-service-1:
     <<: *worker-service
     command: ["/bin/inventory-service", "-config", "/app/config.yaml", "-group-id", "inventory-service"]
+    ports:
+      - "9001:9000"
 
   inventory-service-2:
     <<: *worker-service
     command: ["/bin/inventory-service", "-config", "/app/config.yaml", "-group-id", "inventory-service"]
+    ports:
+      - "9002:9000"
 
   payment-service-1:
     <<: *worker-service
     command: ["/bin/payment-service", "-config", "/app/config.yaml", "-group-id", "payment-service"]
+    ports:
+      - "9003:9000"
 
   payment-service-2:
     <<: *worker-service
     command: ["/bin/payment-service", "-config", "/app/config.yaml", "-group-id", "payment-service"]
+    ports:
+      - "9004:9000"
 
   shipping-service-1:
     <<: *worker-service
     command: ["/bin/shipping-service", "-config", "/app/config.yaml", "-group-id", "shipping-service"]
+    ports:
+      - "9005:9000"
 
   shipping-service-2:
     <<: *worker-service
     command: ["/bin/shipping-service", "-config", "/app/config.yaml", "-group-id", "shipping-service"]
+    ports:
+      - "9006:9000"
 
 volumes:
   kafka_data:

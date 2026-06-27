@@ -36,4 +36,6 @@ func (c *Config) Normalize() {
 	if c.Postgres.SSLMode == "" {
 		c.Postgres.SSLMode = "disable"
 	}
+
+	c.Observability.Address = strings.TrimSpace(c.Observability.Address)
 }

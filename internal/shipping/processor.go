@@ -47,7 +47,7 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 	}
 
 	if has {
-		return worker.Result{Skip: true}, nil
+		return worker.Result{Skip: true, Duplicate: true}, nil
 	}
 
 	out, err := p.handler.HandlePaymentSucceeded(ctx, event)

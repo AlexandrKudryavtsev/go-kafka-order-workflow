@@ -101,5 +101,10 @@ func (c *Config) Validate() error {
 		return errors.New("invalid ssl mode")
 	}
 
+	// observability
+	if c.Observability.Address == "" {
+		return errors.New("invalid observability address")
+	}
+
 	return nil
 }

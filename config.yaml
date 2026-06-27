@@ -33,3 +33,6 @@ postgres:
   ssl_mode: disable
   max_conns: 10
   min_conns: 1
+
+observability:
+  address: ":9000"

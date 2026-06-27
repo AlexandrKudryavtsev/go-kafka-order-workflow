@@ -8,16 +8,18 @@ import (
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
+	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/observability"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/pkg/kafka"
 	"github.com/google/uuid"
 )
 
 type Result struct {
-	EventID string
-	OrderID string
-	Key     string
-	Event   any
-	Skip    bool
+	EventID   string
+	OrderID   string
+	Key       string
+	Event     any
+	Skip      bool
+	Duplicate bool
 }
 
 type Processor interface {
@@ -35,6 +37,7 @@ type Config struct {
 	Backoff          time.Duration
 	Logger           *slog.Logger
 	IdempotencyStore idempotency.Store
+	Observability    *observability.Observability
 }
 
 func Run(ctx context.Context, cfg Config, processor Processor) error {
@@ -53,8 +56,12 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 	if processor == nil {
 		return errors.New("invalid processor")
 	}
+	if cfg.Observability == nil {
+		return errors.New("invalid observability")
+	}
 
 	log := cfg.Logger.With("service", cfg.ServiceName, "source_topic", cfg.SourceTopic, "group", cfg.ConsumerGroupID)
+	metrics := cfg.Observability
 
 	consumer := kafka.NewConsumer(cfg.SourceTopic, cfg.ConsumerGroupID, cfg.Brokers)
 	defer func() {
@@ -103,6 +110,10 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 				reason = processingErr.Reason
 			}
 
+			if reason == events.ReasonHandlerFailed {
+				metrics.MarkHandlerError()
+			}
+
 			dlq := events.DLQEvent{
 				EventID:       uuid.NewString(),
 				OriginalEvent: string(msg.Value),
@@ -119,6 +130,7 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 				log.Error("failed to write dlq", "error", err)
 				return err
 			}
+			metrics.MarkDLQ()
 
 			log.Info("event published to dlq", "eventId", dlq.EventID)
 
@@ -136,6 +148,10 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 				return err
 			}
 
+			if result.Duplicate {
+				metrics.MarkDuplicate()
+			}
+
 			continue
 		}
 
@@ -150,6 +166,7 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			"order_id", result.OrderID,
 			"input_event_id", result.EventID,
 		)
+		metrics.MarkPublished()
 
 		if err := cfg.IdempotencyStore.Mark(ctx, result.EventID); err != nil {
 			log.Error("failed to mark event as processed", "error", err)
@@ -160,5 +177,7 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			log.Error("failed to commit message", "error", err)
 			return err
 		}
+
+		metrics.MarkProcessed()
 	}
 }

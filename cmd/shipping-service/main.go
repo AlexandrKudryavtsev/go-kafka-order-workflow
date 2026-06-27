@@ -13,6 +13,7 @@ import (
 func main() {
 	configPath := flag.String("config", "./config.yaml", "path to config")
 	groupID := flag.String("group-id", "shipping-service", "kafka consumer group id")
+	metricsAddress := flag.String("metrics-address", "", "metrics address")
 
 	flag.Parse()
 
@@ -26,6 +27,10 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create config: %v\n", err)
 		os.Exit(1)
+	}
+
+	if *metricsAddress != "" {
+		cfg.Observability.Address = *metricsAddress
 	}
 
 	cfg.Normalize()

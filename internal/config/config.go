@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	HTTP     HTTPConfig      `yaml:"http"`
-	Logger   logger.Config   `yaml:"logger"`
-	Kafka    KafkaConfig     `yaml:"kafka"`
-	Retry    RetryConfig     `yaml:"retry"`
-	Postgres postgres.Config `yaml:"postgres"`
+	HTTP          HTTPConfig          `yaml:"http"`
+	Logger        logger.Config       `yaml:"logger"`
+	Kafka         KafkaConfig         `yaml:"kafka"`
+	Retry         RetryConfig         `yaml:"retry"`
+	Postgres      postgres.Config     `yaml:"postgres"`
+	Observability ObservabilityConfig `yaml:"observability"`
 }
 
 type HTTPConfig struct {
@@ -41,6 +42,10 @@ type KafkaTopicsConfig struct {
 type RetryConfig struct {
 	MaxRetries int      `yaml:"max_retries"`
 	Backoff    Duration `yaml:"backoff"`
+}
+
+type ObservabilityConfig struct {
+	Address string `yaml:"address"`
 }
 
 func New(path string) (*Config, error) {
