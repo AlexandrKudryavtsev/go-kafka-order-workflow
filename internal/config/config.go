@@ -39,7 +39,8 @@ type KafkaTopicsConfig struct {
 }
 
 type RetryConfig struct {
-	MaxRetries int `yaml:"max_retries"`
+	MaxRetries int      `yaml:"max_retries"`
+	Backoff    Duration `yaml:"backoff"`
 }
 
 func New(path string) (*Config, error) {

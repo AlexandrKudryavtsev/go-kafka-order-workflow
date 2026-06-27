@@ -32,6 +32,7 @@ type Config struct {
 	Brokers          []string
 	ConsumerGroupID  string
 	MaxAttempts      int
+	Backoff          time.Duration
 	Logger           *slog.Logger
 	IdempotencyStore idempotency.Store
 }
@@ -39,6 +40,9 @@ type Config struct {
 func Run(ctx context.Context, cfg Config, processor Processor) error {
 	if cfg.MaxAttempts <= 0 {
 		return errors.New("invalid max attempts")
+	}
+	if cfg.Backoff < 0 {
+		return errors.New("invalid backoff")
 	}
 	if cfg.Logger == nil {
 		return errors.New("invalid logger")
@@ -90,33 +94,14 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 			"key", string(msg.Key),
 		)
 
-		handled := false
-		var lastError error
-		var result Result
-
-		for attempt := 1; attempt <= cfg.MaxAttempts; attempt++ {
-			result, err = processor.Process(ctx, msg)
-			if err == nil {
-				handled = true
-				break
-			}
-
-			lastError = err
-			log.Warn(
-				"failed to process event",
-				"error", err,
-				"attempt", attempt,
-				"attempts", cfg.MaxAttempts,
-			)
-		}
-
-		if !handled {
+		result, err := processWithRetry(ctx, log, msg, cfg.MaxAttempts, cfg.Backoff, processor)
+		if err != nil {
 			dlq := events.DLQEvent{
 				EventID:       uuid.NewString(),
 				OriginalEvent: string(msg.Value),
 
 				Reason:        "handler_failed",
-				Error:         lastError.Error(),
+				Error:         err.Error(),
 				SourceTopic:   cfg.SourceTopic,
 				ConsumerGroup: cfg.ConsumerGroupID,
 				Attempts:      cfg.MaxAttempts,

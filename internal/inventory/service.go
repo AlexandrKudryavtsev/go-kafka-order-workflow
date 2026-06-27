@@ -45,6 +45,7 @@ func Run(cfg *config.Config, groupID string) error {
 		Brokers:          cfg.Kafka.Brokers,
 		ConsumerGroupID:  groupID,
 		MaxAttempts:      cfg.Retry.MaxRetries,
+		Backoff:          cfg.Retry.Backoff.Duration,
 		Logger:           log,
 		IdempotencyStore: store,
 	}, processor)

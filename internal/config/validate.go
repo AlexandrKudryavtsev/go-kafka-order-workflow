@@ -75,6 +75,9 @@ func (c *Config) Validate() error {
 	if c.Retry.MaxRetries <= 0 {
 		return errors.New("invalid max_retries")
 	}
+	if c.Retry.Backoff.Duration <= 0 {
+		return errors.New("invalid backoff")
+	}
 
 	// postgres
 	if c.Postgres.Database == "" {
