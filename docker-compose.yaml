@@ -1,3 +1,14 @@
+x-go-service: &go-service
+  build: .
+
+x-worker-service: &worker-service
+  <<: *go-service
+  depends_on:
+    postgres:
+      condition: service_healthy
+    kafka_init:
+      condition: service_completed_successfully
+
 services:
   kafka:
     image: apache/kafka:4.0.0
@@ -56,6 +67,39 @@ services:
       retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  order-api:
+    <<: *go-service
+    command: ["/bin/order-api", "-config", "/app/config.yaml"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      kafka_init:
+        condition: service_completed_successfully
+
+  inventory-service-1:
+    <<: *worker-service
+    command: ["/bin/inventory-service", "-config", "/app/config.yaml", "-group-id", "inventory-service"]
+
+  inventory-service-2:
+    <<: *worker-service
+    command: ["/bin/inventory-service", "-config", "/app/config.yaml", "-group-id", "inventory-service"]
+
+  payment-service-1:
+    <<: *worker-service
+    command: ["/bin/payment-service", "-config", "/app/config.yaml", "-group-id", "payment-service"]
+
+  payment-service-2:
+    <<: *worker-service
+    command: ["/bin/payment-service", "-config", "/app/config.yaml", "-group-id", "payment-service"]
+
+  shipping-service-1:
+    <<: *worker-service
+    command: ["/bin/shipping-service", "-config", "/app/config.yaml", "-group-id", "shipping-service"]
+
+  shipping-service-2:
+    <<: *worker-service
+    command: ["/bin/shipping-service", "-config", "/app/config.yaml", "-group-id", "shipping-service"]
 
 volumes:
   kafka_data:
