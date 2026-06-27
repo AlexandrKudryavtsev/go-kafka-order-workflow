@@ -3,6 +3,7 @@ package shipping
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/events"
 	"github.com/AlexandrKudryavtsev/go-kafka-order-workflow/internal/idempotency"
@@ -26,16 +27,23 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 	var event events.PaymentSucceededEvent
 
 	if err := json.Unmarshal(msg.Value, &event); err != nil {
-		return worker.Result{}, err
+		return worker.Result{}, worker.NonRetryable(events.ReasonInvalidJSON, err)
 	}
 
 	if event.EventType != events.EventTypePaymentSucceeded {
 		return worker.Result{Skip: true}, nil
 	}
 
+	if event.Version != 1 {
+		return worker.Result{}, worker.NonRetryable(
+			events.ReasonUnsupportedEventVersion,
+			fmt.Errorf("unsupported event version: %d", event.Version),
+		)
+	}
+
 	has, err := p.store.Has(ctx, event.EventID)
 	if err != nil {
-		return worker.Result{}, err
+		return worker.Result{}, worker.Retryable(events.ReasonIdempotencyStoreFailed, err)
 	}
 
 	if has {
@@ -44,7 +52,7 @@ func (p *Processor) Process(ctx context.Context, msg kafka.Message) (worker.Resu
 
 	out, err := p.handler.HandlePaymentSucceeded(ctx, event)
 	if err != nil {
-		return worker.Result{}, err
+		return worker.Result{}, worker.Retryable(events.ReasonHandlerFailed, err)
 	}
 
 	return worker.Result{

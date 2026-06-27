@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -17,9 +18,10 @@ func processWithRetry(
 	handler Processor,
 ) (Result, error) {
 	var lastErr error
+	var res Result
 
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		res, lastErr := handler.Process(ctx, msg)
+		res, lastErr = handler.Process(ctx, msg)
 		if lastErr == nil {
 			return res, nil
 		}
@@ -30,6 +32,13 @@ func processWithRetry(
 			"attempt", attempt,
 			"attempts", maxAttempts,
 		)
+
+		var processingError *ProcessingError
+
+		if errors.As(lastErr, &processingError) &&
+			processingError.Kind == NonRetryableError {
+			break
+		}
 
 		if attempt == maxAttempts {
 			break

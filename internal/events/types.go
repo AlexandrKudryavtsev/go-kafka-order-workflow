@@ -14,6 +14,14 @@ const (
 	EventTypeDeadLetter        = "dead_letter_event"
 )
 
+const (
+	ReasonInvalidJSON             = "invalid_json"
+	ReasonInvalidEventPayload     = "invalid_event_payload"
+	ReasonUnsupportedEventVersion = "unsupported_event_version"
+	ReasonHandlerFailed           = "handler_failed"
+	ReasonIdempotencyStoreFailed  = "idempotency_store_failed"
+)
+
 type Item struct {
 	SKU      string `json:"sku"`
 	Quantity int    `json:"quantity"`

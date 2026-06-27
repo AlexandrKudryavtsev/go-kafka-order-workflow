@@ -96,11 +96,18 @@ func Run(ctx context.Context, cfg Config, processor Processor) error {
 
 		result, err := processWithRetry(ctx, log, msg, cfg.MaxAttempts, cfg.Backoff, processor)
 		if err != nil {
+			reason := events.ReasonHandlerFailed
+
+			var processingErr *ProcessingError
+			if errors.As(err, &processingErr) {
+				reason = processingErr.Reason
+			}
+
 			dlq := events.DLQEvent{
 				EventID:       uuid.NewString(),
 				OriginalEvent: string(msg.Value),
 
-				Reason:        "handler_failed",
+				Reason:        reason,
 				Error:         err.Error(),
 				SourceTopic:   cfg.SourceTopic,
 				ConsumerGroup: cfg.ConsumerGroupID,
